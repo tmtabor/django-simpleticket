@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Create Ticket{% endblock %}
+{% block pagename %}Create Ticket{% endblock %}
+
+{% block head %}
+    <script src="/static/ckeditor/ckeditor.js"></script>
+    <script src="/static/ckeditor/adapters/jquery.js"></script>
+    <style type="text/css">
+        #create-ticket-div {
+            text-align: right;
+        }
+    </style>
+    <script type="text/javascript">
+        $(document).ready( function() {
+            $('#desc').ckeditor({
+                toolbarGroups: [
+                    { name: 'document',	   groups: [ 'mode', 'document' ] },
+                    { name: 'basicstyles', groups: [ 'basicstyles', 'cleanup' ] },
+                    { name: 'links' },
+                    { name: 'styles' },
+                    { name: 'colors' },
+                    { name: 'paragraph',   groups: [ 'list', 'indent', 'blocks', 'align', 'bidi' ] }
+                ],
+                contentsCss: [CKEDITOR.basePath + 'contents.css', 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css']
+            });
+        } );
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div id="create-ticket-div">
+        <button id="project-view-button" class="btn ticket-button">Project View</button>
+        <button id="view-all-button" class="btn ticket-button">All Tickets</button>
+        <button id="create-ticket-button" class="btn btn-success ticket-button" disabled="disabled">Create New Ticket</button>
+        <script type="text/javascript">
+            $("#create-ticket-button").click(function() {
+                window.location.href = "/tickets/new/";
+            });
+            $("#view-all-button").click(function() {
+                window.location.href = "/tickets/";
+            });
+            $("#project-view-button").click(function() {
+                window.location.href = "/tickets/project/";
+            });
+        </script>
+    </div>
+
+    <form action="/tickets/submit_ticket/" method="POST">
+        {% csrf_token %}
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="project">Project</label>
+                    <select id="project"  name="project" class="form-control">
+                        {% for project in project_list %}
+                            <option value="{{ project.id }}" {% if project.is_default %}selected="selected"{% endif %}>{{ project.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="priority">Priority</label>
+                    <select id="priority"  name="priority" class="form-control">
+                        {% for priority in priority_list %}
+                            <option value="{{ priority.id }}" {% if priority.is_default %}selected="selected"{% endif %} style="color: {{ priority.display_color }};">{{ priority.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="status"  name="status" class="form-control">
+                        {% for status in status_list %}
+                            <option value="{{ status.id }}" {% if status.is_default %}selected="selected"{% endif %}>{{ status.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="assigned">Assigned to</label>
+                    <select id="assigned"  name="assigned" selected="selected" class="form-control">
+                        <option value="unassigned">Unassigned</option>
+                        {% for member in tab_users %}
+                            <option value="{{ member.id }}">{{ member.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-6" style="text-align: right;">
+                [ <a href="/tickets/">View All Tickets</a> ]<br/>
+                [ <a href="/tickets/?user={{ user.id }}">View My Tickets</a> ]
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="name">Summary</label>
+            <input type="text" name="name" id="name" value="{{ name }}" class="form-control"/>
+        </div>
+
+        <div class="form-group">
+            <label for="desc">Description</label>
+            <textarea name="desc" id="desc" class="form-control"></textarea>
+        </div>
+
+        <input type="submit" class="btn btn-primary btn-lg" value="Submit Ticket" />
+    </form>
+{% endblock %}

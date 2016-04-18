@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Project View{% endblock %}
+{% block pagename %}Project View{% endblock %}
+
+{% block head %}
+    <script type="text/javascript" src="/static/jqplot/jquery.jqplot.min.js"></script>
+    <script type="text/javascript" src="/static/jqplot/jqplot.pieRenderer.min.js"></script>
+    <link rel="stylesheet" href="/static/jqplot/jquery.jqplot.css" />
+    <style type="text/css">
+        #create-ticket-div {
+            text-align: right;
+            margin-bottom: 5px;
+        }
+
+        .project input {
+            width: 200px;
+        }
+    </style>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $(".chart-region").hide();
+            $(".chart-region:first").show();
+
+            eval("activateChart1()");
+            $("#project-pills li:first").addClass("active");
+
+            $( "#project-pills li" ).click(function(event) {
+                var number = $(event.target).attr("name");
+
+                $(".chart-region").hide();
+                $("#project-" + number).show();
+
+                eval("activateChart" + number + "()");
+
+                $("#project-pills li").removeClass("active");
+                $(event.target).parent().addClass("active");
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div id="create-ticket-div">
+        <button id="project-view-button" class="btn ticket-button" disabled="disabled">Project View</button>
+        <button id="view-all-button" class="btn ticket-button">All Tickets</button>
+        <button id="create-ticket-button" class="btn btn-success ticket-button">Create New Ticket</button>
+        <script type="text/javascript">
+            $("#create-ticket-button").click(function() {
+                window.location.href = "/tickets/new/";
+            });
+            $("#view-all-button").click(function() {
+                window.location.href = "/tickets/";
+            });
+            $("#project-view-button").click(function() {
+                window.location.href = "/tickets/project/";
+            });
+        </script>
+    </div>
+
+    <div id="row tabs">
+        <div class="col-md-4" style="padding-top: 20px;">
+            <ul id="project-pills" class="nav nav-pills nav-stacked">
+                {% for project in project_list %}
+                    <li><a href="#" name="{{ project.id }}">{{ project.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="col-md-8 project">
+            {% for project in project_list %}
+                <div id="project-{{ project.id }}" name="{{ project.id }}" class="chart-region">
+                    <h2>{{ project.name }}</h2>
+
+                    <div style="text-align: center;">
+                        <div id="pieChart-{{ project.id }}" style="height:300px;width:600px; margin-left: auto ; margin-right: auto ;"></div>
+                    </div>
+                </div>
+                <script type="text/javascript">
+                    // Make the map
+                    var hours{{ project.id }} = {
+                        {% for contributor, total in project.user_time_map.items %}
+                            "{{ contributor }}" : {{ total }},
+                        {% endfor %}
+                    };
+
+                    // Calculate the total
+                    var total{{ project.id }} = 0;
+                    $.each(hours{{ project.id }}, function(i, e) {
+                        total{{ project.id }} += e;
+                    });
+
+                    // Calculate the percents
+                    var percents{{ project.id }} = {};
+                    $.each(hours{{ project.id }}, function(i, e) {
+                        percents{{ project.id }}[i] = hours{{ project.id }}[i] / total{{ project.id }};
+                    });
+
+                    // Put into input fields
+                    $.each(percents{{ project.id }}, function(i, e) {
+                        $("#percent-{{ project.id }}-" + i).val(e.toFixed(2));
+                    });
+
+                    // Attach change event
+                    $("#distro-{{ project.id }}").change(function(event, handler) {
+                        var newDist = $(event.target).val();
+                        $.each($(".income{{ project.id }}"), function(i, e) {
+                            var percent = $(e).prev(".percent{{ project.id }}").val();
+                            $(e).val((newDist * percent).toFixed(2));
+                        });
+                    });
+                </script>
+
+                <script type="text/javascript">
+                    function activateChart{{ project.id }}() {
+                        jQuery.jqplot('pieChart-{{ project.id }}',
+                                [[{% for contributor, total in project.user_time_map.items %}['{{ contributor }} ({{ total }} hours)', {{ total }}], {% endfor %} ]],
+                                {
+                                    title: ' ',
+                                    seriesDefaults: {
+                                        shadow: false,
+                                        renderer: jQuery.jqplot.PieRenderer,
+                                        rendererOptions: {
+                                            startAngle: 180,
+                                            sliceMargin: 4,
+                                            showDataLabels: true }
+                                    },
+                                    legend: { show:true, location: 'w' }
+                                }
+                        );
+                    }
+                </script>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}

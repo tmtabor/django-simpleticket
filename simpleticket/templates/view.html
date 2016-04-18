@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block title %}Ticket: {{ ticket.name }}{% endblock %}
+{% block pagename %}{{ ticket.name }}{% endblock %}
+
+{% block head %}
+    <style type="text/css">
+        #description {
+            font-size: 12pt;
+            position: relative;
+            left: -6px;
+        }
+        .ticket-comment {
+            min-height: 90px;
+            padding: 5px;
+        }
+        .comment-info {
+            font-size: 10pt;
+            border-style: dashed;
+            border-color: gray;
+            border-width: 1px;
+            padding: 5px;
+        }
+        .content label {
+            width: 150px;
+        }
+        #comment-text {
+            min-height: 100px;
+        }
+        select {
+            width: 100px;
+        }
+        .delete-comment {
+            float:right;
+            margin-right: 5px;
+            font-weight: bold;
+        }
+        .pagination {
+            float:right;
+            margin: 0px;
+            padding: 0px;
+        }
+        #create-ticket-div {
+            text-align: right;
+        }
+        .ticket-comment label {
+            width: 88px;
+        }
+        .even {
+            background-color: #EEEEEE;
+        }
+    </style>
+    <script src="/static/ckeditor/ckeditor.js"></script>
+    <script src="/static/ckeditor/adapters/jquery.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $('#comment-text').ckeditor({
+                toolbarGroups: [
+                    { name: 'document',	   groups: [ 'mode', 'document' ] },
+                    { name: 'basicstyles', groups: [ 'basicstyles', 'cleanup' ] },
+                    { name: 'links' },
+                    { name: 'styles' },
+                    { name: 'colors' },
+                    { name: 'paragraph',   groups: [ 'list', 'indent', 'blocks', 'align', 'bidi' ] }
+                ],
+                contentsCss: [CKEDITOR.basePath + 'contents.css', 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css']
+            });
+        });
+
+    function deleteComment(id) {
+        return confirm("Are you sure you want to delete this comment?");
+    }
+    </script>
+{% endblock %}
+
+{% block content %}
+    <div id="create-ticket-div">
+        <button id="project-view-button" class="btn ticket-button">Project View</button>
+        <button id="view-all-button" class="btn ticket-button">All Tickets</button>
+        <button id="create-ticket-button" class="btn btn-success ticket-button">Create New Ticket</button>
+        <script type="text/javascript">
+            $("#create-ticket-button").click(function() {
+                window.location.href = "/tickets/new/";
+            });
+            $("#view-all-button").click(function() {
+                window.location.href = "/tickets/";
+            });
+            $("#project-view-button").click(function() {
+                window.location.href = "/tickets/project/";
+            });
+        </script>
+    </div>
+
+    <div class="row">
+        <div class="col-md-5">
+            <div id="project">
+                <label>Project</label> <a href="/tickets/?project={{ ticket.project.id }}">{{ ticket.project.name }}</a>
+            </div>
+
+            <div id="priority">
+                <label>Priority</label> <a href="/tickets/?priority={{ ticket.priority.id }}" style="color: {{ ticket.priority.display_color }};">{{ ticket.priority.name }}</a>
+            </div>
+
+            <div id="status">
+                <label>Status</label> <a href="/tickets/?status={{ ticket.status.id }}">{{ ticket.status.name }}</a>
+            </div>
+
+            <div id="time_logged">
+                <label>Time logged</label> {{ ticket.time_logged }} hours
+            </div>
+        </div>
+        <div class="col-md-5">
+            <div id="created_by">
+                <label>Created by</label> <a href="/tickets/?created_by={{ ticket.assigned_to.id }}">{{ ticket.created_by.username }}</a>
+            </div>
+
+            <div id="assigned_to">
+                {% if ticket.assigned_to %}
+                    <label>Assigned to</label> <a href="/tickets/?assigned_to={{ ticket.created_by.id }}">{{ ticket.assigned_to.username }}</a>
+                {% else %}
+                    <label>Assigned to</label> Unassigned
+                {% endif %}
+            </div>
+
+            <div id="created">
+                <label>Created</label> {{ ticket.creation_time }}
+            </div>
+
+            <div id="updated">
+                <label>Updated</label> {{ ticket.update_time }}
+            </div>
+        </div>
+        <div class="col-md-2" style="text-align: right;">
+            <div><br/>[ <a href="/tickets/?user={{ user.id }}">View My Tickets</a> ]</div> <br/>
+            <div>[ <a href="/tickets/update/{{ ticket.id }}/">Update Ticket</a> ]</div>
+            <div>[ <a onclick="return confirm('Are you sure you want to delete this ticket?');" href="/tickets/delete/{{ ticket.id }}/">Delete Ticket</a> ]</div>
+        </div>
+    </div>
+
+    <hr/>
+
+    <div class="row">
+        <div class="col-md-2">
+            <label>Description</label>
+        </div>
+        <div id="description" class="col-md-10">
+            {{ ticket.desc|safe }}
+        </div>
+    </div>
+
+    <hr/>
+
+    <div class="pagination">
+        <span class="step-links">
+            {% if ticket_comments.has_previous %}
+                <a href="?page={{ ticket_comments.previous_page_number }}">&lt; Previous</a> |
+            {% endif %}
+
+            <span class="current">
+                Page {{ ticket_comments.number }} of {{ ticket_comments.paginator.num_pages }}
+            </span>
+
+            {% if ticket_comments.has_next %}
+                | <a href="?page={{ ticket_comments.next_page_number }}">Next &gt;</a>
+            {% endif %}
+        </span>
+    </div>
+    <h4>Ticket Comments</h4>
+
+    {% for comment in ticket_comments.object_list %}
+        <div class="row ticket-comment {% cycle 'even' 'odd' %}">
+            <div class="col-md-9 comment-text">{{ comment.text|safe|linebreaksbr }}</div>
+            <div class=" col-md-3 comment-info">
+                {% if user == comment.commenter %}
+                    <div class="delete-comment" title="Delete Comment"><a href="/tickets/delete_comment/{{ comment.id }}/" onclick="JavaScript:return deleteComment({{ comment.id }});"> &#215;</a></div>
+                {% endif %}
+                <div class="commenter"><label>User</label><a href="/tickets/?created_by=1">{{ comment.commenter.username }}</a></div>
+                <div class="update-time"><label>Updated</label>{{ comment.update_time|date:"H:i, d/m/y" }}</div>
+                <div class="time-logged"><label>Time Logged</label>{{ comment.time_logged }} hours</div>
+            </div>
+        </div>
+    {% endfor %}
+
+    <hr/>
+
+    <div class="add-comment">
+        <h4>Comment on Ticket</h4>
+        <form method="POST" action="/tickets/submit_comment/{{ ticket.id }}/">
+            {% csrf_token %}
+            <div class="row" style="margin-bottom: 20px;">
+                <div class="col-md-9">
+                    <textarea id="comment-text" name="comment-text" class="form-control"></textarea>
+                </div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label for="comment-time-logged" style="width: 100%;">Time Logged (Hours)</label>
+                        <input id="comment-time-logged" name="comment-time-logged" class="form-control" type="number" value="0" step="0.1" />
+                    </div>
+                    <div class="form-group">
+                        <label for="comment-status">Status</label>
+                        <select id="comment-status" name="comment-status" class="form-control">
+                            {% for status in status_list %}
+                                <option value="{{ status.id }}" {% if status == ticket.status %}selected="selected"{% endif %}>{{ status.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <input id="submit-comment" type="submit" class="btn btn-primary btn-lg" value="Comment" />
+        </form>
+    </div>
+{% endblock %}
