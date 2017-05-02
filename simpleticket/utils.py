@@ -4,6 +4,7 @@ from django.core.mail import send_mail
 
 __author__ = 'Thorin Tabor'
 
+
 def email_user(user, subject, message, sent_by=DEFAULT_FROM_EMAIL):
     if isinstance(user, User):
         to_email = user.email

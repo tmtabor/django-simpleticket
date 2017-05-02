@@ -1,13 +1,17 @@
 from datetime import datetime
-from django.shortcuts import render_to_response
-from django.template import RequestContext
+from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.contrib.auth.models import User
 from simpleticket.models import Priority, Status, Project, Ticket, TicketComment
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.contrib import messages
-import urllib
+
+try:
+    from urllib.parse import urlencode
+except ImportError:
+    from urllib import urlencode
+
 from simpleticket.utils import email_user
 
 
@@ -17,9 +21,9 @@ def create(request):
     project_list = Project.objects.all()
     user_list = User.objects.all()
 
-    return render_to_response('create.html', {'tab_users': user_list,
+    return render(request, 'create.html', {'tab_users': user_list,
                                               'priority_list': priority_list, 'status_list': status_list,
-                                              'project_list': project_list}, context_instance=RequestContext(request))
+                                              'project_list': project_list})
 
 
 def view(request, ticket_id=1):
@@ -38,8 +42,8 @@ def view(request, ticket_id=1):
     except (EmptyPage, InvalidPage):
         ticket_comments = paginator.page(paginator.num_pages)
 
-    return render_to_response('view.html', {'ticket': ticket,
-                                                      'status_list': status_list, 'ticket_comments': ticket_comments}, context_instance=RequestContext(request))
+    return render(request, 'view.html', {'ticket': ticket,
+                                         'status_list': status_list, 'ticket_comments': ticket_comments})
 
 
 def view_all(request):
@@ -130,7 +134,7 @@ def view_all(request):
         del get_dict['sort']
     if get_dict.get('order'):
         del get_dict['order']
-    base_url = request.path_info + "?" + urllib.urlencode(get_dict)
+    base_url = request.path_info + "?" + urlencode(get_dict)
 
     if closed_filter == 'true':
         show_closed = 'true'
@@ -172,11 +176,11 @@ def view_all(request):
     get_params = '&'.join(pairs)
     prev_link = request.path + '?' + get_params
 
-    return render_to_response('view_all.html', {'tickets': tickets, 'filter': filter,
+    return render(request, 'view_all.html', {'tickets': tickets, 'filter': filter,
                                                           'filter_message': filter_message, 'base_url': base_url,
                                                           'next_link': next_link, 'prev_link': prev_link,
                                                           'sort': sort_setting, 'order': order_setting,
-                                                          'show_closed': show_closed}, context_instance=RequestContext(request))
+                                                          'show_closed': show_closed})
 
 
 def submit_ticket(request):
@@ -257,9 +261,9 @@ def update(request, ticket_id):
     project_list = Project.objects.all()
     users_list = User.objects.all()
 
-    return render_to_response('update.html', {'ticket': ticket, 'tab_users': users_list,
+    return render(request, 'update.html', {'ticket': ticket, 'tab_users': users_list,
                                                         'priority_list': priority_list, 'status_list': status_list,
-                                                        'project_list': project_list}, context_instance=RequestContext(request))
+                                                        'project_list': project_list})
 
 
 def update_ticket(request, ticket_id):
@@ -354,4 +358,4 @@ def delete_comment(request, comment_id):
 def project(request):
     project_list = Project.objects.all()
 
-    return render_to_response('project.html', {'project_list': project_list}, context_instance=RequestContext(request))
+    return render(request, 'project.html', {'project_list': project_list})

@@ -10,6 +10,9 @@ class Project(models.Model):
     def __unicode__(self):
         return self.name
 
+    def __str__(self):
+        return self.name
+
     def active_users(self):
         user_set = set()
         for ticket in self.ticket_set.all():
@@ -33,6 +36,9 @@ class Priority(models.Model):
     def __unicode__(self):
         return self.name + " (" + str(self.value) + ")"
 
+    def __str__(self):
+        return self.__unicode__()
+
 
 class Status(models.Model):
     name = models.CharField(max_length=32)
@@ -40,6 +46,9 @@ class Status(models.Model):
     hide_by_default = models.BooleanField(default=False)
 
     def __unicode__(self):
+        return self.name
+
+    def __str__(self):
         return self.name
 
 
@@ -59,6 +68,9 @@ class Ticket(models.Model):
     time_logged = models.FloatField(default=0)
 
     def __unicode__(self):
+        return self.name
+
+    def __str__(self):
         return self.name
 
 

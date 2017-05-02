@@ -5,8 +5,8 @@ a new or existing Django site. It aims for bare bones simplicity rather than ela
 minimizing dependencies and allowing the app to be set up in as little time as possible.
 
 ## Requirements
-* Python 2.7
-* Django 1.9
+* Python 2.7 or 3.5+
+* Django 1.10+
 
 ## Setup Instructions
 1. Copy the django-simpleticket app into the appropriate directory.
